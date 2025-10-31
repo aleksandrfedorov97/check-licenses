@@ -36,6 +36,6 @@ runs:
           exit 1
         fi
 
-        cp "$SRC" "${{ inputs.working_directory }}/dependency_decisions.yml"
+        cp "$SRC" "${{ inputs.working_directory }}/doc/dependency_decisions.yml"
 
         license_finder
