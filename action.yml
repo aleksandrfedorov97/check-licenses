@@ -28,11 +28,14 @@ runs:
         cd "${{ inputs.working_directory }}"
         echo "🔎 Running LicenseFinder for license: ${{ inputs.project_license }}"
 
-        POLICY_FILE="doc/${{ inputs.project_license }}/dependency_decisions.yml"
+        ACTION_DIR="$(dirname "${BASH_SOURCE[0]}")"
+        SRC="$ACTION_DIR/doc/${{ inputs.project_license }}/dependency_decisions.yml"
 
-        if [ ! -f "$POLICY_FILE" ]; then
+        if [ ! -f "$SRC" ]; then
           echo "⚠️ Policy-file ${{ inputs.project_license }} not found."
           exit 1
         fi
 
-        license_finder --decisions-file "$POLICY_FILE"
+        cp "$SRC" "${{ inputs.working_directory }}/dependency_decisions.yml"
+
+        license_finder
