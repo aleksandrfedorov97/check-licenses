@@ -16,6 +16,9 @@ fi
 
 echo "✅ Using decisions file: '$POLICY_FILE'"
 
+echo "📂 Listing files in working directory:"
+ls -la "$WORKING_DIR"
+
 cd "$WORKING_DIR"
 
 license_finder --decisions-file "$POLICY_FILE"
