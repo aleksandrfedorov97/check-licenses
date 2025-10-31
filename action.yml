@@ -1,0 +1,38 @@
+name: "Check licenses"
+description: ""
+author: ""
+
+inputs:
+  project_license:
+    description: "License type (MIT, Apache-2.0)"
+    required: true
+  working_directory:
+    description: "Working directory"
+    required: false
+    default: "."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Ruby и LicenseFinder
+      shell: bash
+      run: |
+        echo "🔧 Installing Ruby and LicenseFinder..."
+        sudo apt-get update -y
+        sudo apt-get install -y ruby-full build-essential
+        sudo gem install license_finder
+
+    - name: Running LicenseFinder
+      shell: bash
+      run: |
+        cd "${{ inputs.working_directory }}"
+        echo "🔎 Running LicenseFinder for license: ${{ inputs.project_license }}"
+
+        POLICY_FILE="doc/${{ inputs.project_license }}/dependency_decisions.yml"
+
+        if [ ! -f "$POLICY_FILE" ]; then
+          echo "⚠️ Policy-file ${{ inputs.project_license }} not found."
+          exit 1
+        fi
+
+        license_finder --decisions-file "$POLICY_FILE"
