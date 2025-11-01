@@ -1,10 +1,9 @@
-name: "Check licenses"
-description: ""
-author: ""
+name: "Check Licenses"
+description: "Checks project dependencies for license compliance"
 
 inputs:
   project_license:
-    description: "License type (MIT, Apache-2.0)"
+    description: "Project License"
     required: true
   working_directory:
     description: "Working directory"
@@ -14,25 +13,42 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Ruby и LicenseFinder
-      shell: bash
+    - name: Install LicenseFinder
       run: |
-        echo "🔧 Installing Ruby and LicenseFinder..."
-        sudo apt-get update -y
-        sudo apt-get install -y ruby-full build-essential
         sudo gem install license_finder
-
-    - name: Running LicenseFinder
       shell: bash
+    
+    - name: Run LicenseFinder
       run: |
-        cd "${{ inputs.working_directory }}"
-        echo "🔎 Running LicenseFinder for license: ${{ inputs.project_license }}"
+        echo "🔎 Running LicenseFinder in working directory: '${{ inputs.working_directory }}', for license: '${{ inputs.project_license }}'"
 
-        POLICY_FILE="doc/${{ inputs.project_license }}/dependency_decisions.yml"
+        POLICY_FILE="$GITHUB_ACTION_PATH/doc/${{ inputs.project_license }}/dependency_decisions.yml"
 
         if [ ! -f "$POLICY_FILE" ]; then
-          echo "⚠️ Policy-file ${{ inputs.project_license }} not found."
+          echo "❌ Policy-file for license '${{ inputs.project_license }}' not found."
           exit 1
         fi
 
-        license_finder --decisions-file "$POLICY_FILE"
+        mkdir -p "${{ inputs.working_directory }}/doc"
+
+        LOCAL_POLICY_FILE="${{ inputs.working_directory }}/doc/dependency_decisions.yml"
+
+        if [ ! -f "$LOCAL_POLICY_FILE" ]; then
+          echo "ℹ️ No local Policy-file dependency_decisions.yml found."
+
+          cp "$POLICY_FILE" "$LOCAL_POLICY_FILE"
+        else
+          echo "ℹ️ Found local Policy-file dependency_decisions.yml."
+
+          MERGED_FILE="${{ inputs.working_directory }}/doc/dependency_decisions_merged.yml"
+          yq eval-all '. as $item ireduce ([]; . + $item)' "$POLICY_FILE" "$LOCAL_POLICY_FILE" > "$MERGED_FILE"
+          mv "$MERGED_FILE" "$LOCAL_POLICY_FILE"
+        fi
+
+        echo "📝 Final Policy-file"
+        cat "$LOCAL_POLICY_FILE"
+
+        cd "${{ inputs.working_directory }}"
+
+        license_finder
+      shell: bash
